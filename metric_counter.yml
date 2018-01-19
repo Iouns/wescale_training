@@ -1,0 +1,27 @@
+- hosts: training
+  become: true
+  vars:
+    ansible_user: igardon
+    node_exporter_deploy_dir: "/opt/node_exporter"
+    custom_metric_path: "{{ node_exporter_deploy_dir }}/txt/pull_count.prom"
+    custom_metric_content: 'training_counter{owner="{{ ansible_user }}"} {{ ansible_local.training.counter }}'
+    training_metric_file: "/etc/ansible/facts.d/training.fact"
+
+  tasks:
+    - debug:
+        msg: "{{ ansible_local }}"
+
+    - name: Increment facts counter
+      copy:
+        content: >
+          { "counter": {{ ansible_local.training.counter + 1 }} }
+        dest: /etc/ansible/facts.d/training.fact
+
+    - name: Push metric to node_exporter
+      copy:
+        content: >
+          {{ custom_metric_content }}
+        dest: "{{ custom_metric_path }}"
+
+
+
